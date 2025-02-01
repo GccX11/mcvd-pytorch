@@ -1,13 +1,13 @@
 training:
   L1: false
   batch_size: 64
-  n_epochs: 5000 #1000000
-  n_iters: 3000001
-  snapshot_freq: 1000 # 50000
+  n_epochs: 10
+  n_iters: 301
+  snapshot_freq: 100
   snapshot_sampling: true
-  sample_freq: 50000
+  sample_freq: 100
   val_freq: 100
-  log_freq: 50
+  log_freq: 100
   log_all_sigmas: false
 
 sampling:
@@ -19,7 +19,7 @@ sampling:
   ssim: true
   fvd: true
   denoise: true
-  subsample: 1000
+  subsample: 100
   num_samples4fid: 10000
   num_samples4fvd: 10000
   inpainting: false
@@ -32,7 +32,6 @@ sampling:
   num_frames_pred: 20
   clip_before: true
   max_data_iter: 100000
-  init_prev_t: -1.0 # if >0, we start next_frame at prev_frame starting with noise t=init_prev_t
   one_frame_at_a_time: false
   preds_per_test: 1
 
@@ -49,12 +48,12 @@ fast_fid:
   n_steps_each: 0
 
 test:
-  begin_ckpt: 5000
-  end_ckpt: 300000
+  begin_ckpt: 50
+  end_ckpt: 300
   batch_size: 100
 
 data:
-  dataset: "StochasticMovingMNIST"
+  dataset: "DVS"
   image_size: 64
   channels: 1
   logit_transform: false
@@ -63,17 +62,15 @@ data:
   random_flip: true
   rescaled: true
   num_workers: 0
-  num_digits: 2
-  step_length: 0.1
   num_frames: 5
-  num_frames_cond: 5
+  num_frames_cond: 10
   num_frames_future: 0
   prob_mask_cond: 0.0
   prob_mask_future: 0.0
   prob_mask_sync: false
 
 model:
-  depth: deep
+  depth: deeper
   version: DDPM
   gamma: false
   arch: unetmore
@@ -89,7 +86,7 @@ model:
   spec_norm: false
   normalization: InstanceNorm++
   nonlinearity: swish
-  ngf: 64
+  ngf: 96
   ch_mult: 
     - 1
     - 2
@@ -100,7 +97,7 @@ model:
     - 8
     - 16
     - 32 # can use only 16 for traditional
-  n_head_channels: 64 # -1 for traditional
+  n_head_channels: 96 # -1 for traditional
   conditional: true
   noise_in_cond: false
   output_all_frames: false # could be useful especially for 3d models
@@ -112,7 +109,7 @@ optim:
   weight_decay: 0.000
   optimizer: "Adam"
   lr: 0.0002
-  warmup: 1000
+  warmup: 5000
   beta1: 0.9
   amsgrad: false
   eps: 0.00000001

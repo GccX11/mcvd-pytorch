@@ -1,4 +1,8 @@
-# conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
+# https://github.com/NVlabs/stylegan2-ada-pytorch/issues/35
+# conda install cudatoolkit
+# https://stackoverflow.com/questions/72540359/glibcxx-3-4-30-not-found-for-librosa-in-conda-virtual-environment-after-tryin
+# conda install -c conda-forge gcc=12.1.0
+
 numpy
 PyYAML
 imageio
@@ -11,3 +15,4 @@ h5py
 progressbar
 psutil
 ninja
+

@@ -1,3 +1,6 @@
+import sys
+sys.path.append('..')
+
 import datetime
 import logging
 import imageio
@@ -10,7 +13,6 @@ import os
 import pickle
 import psutil
 import scipy.stats as st
-import sys
 import time
 import yaml
 
@@ -2200,7 +2202,7 @@ class NCSNRunner():
 
         def image_metric_stuff(metric):
             avg_metric, std_metric = metric.mean().item(), metric.std().item()
-            conf95_metric = avg_metric - float(st.norm.interval(alpha=0.95, loc=avg_metric, scale=st.sem(metric))[0])
+            conf95_metric = avg_metric - float(st.norm.interval(loc=avg_metric, scale=st.sem(metric), confidence=0.95)[0])
             return avg_metric, std_metric, conf95_metric
 
         avg_mse, std_mse, conf95_mse = image_metric_stuff(mse_list)
