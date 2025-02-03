@@ -24,7 +24,7 @@ sampling:
   num_samples4fvd: 10000
   inpainting: false
   interpolation: false
-  n_interpolations: 15
+  n_interpolations: 5
   consistent: true
   step_lr: 0.0
   n_steps_each: 0

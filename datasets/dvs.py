@@ -16,7 +16,7 @@ from torchvision import transforms
 #       but, I need to read the paper to figure this out
 
 class DVSDataset(Dataset):
-    def __init__(self, data_dir, frames_per_sample=5, train=True, random_time=True, random_horizontal_flip=False,
+    def __init__(self, data_dir, frames_per_sample=15, train=True, random_time=True, random_horizontal_flip=False,
                  total_videos=-1, with_target=True, start_at=0, max_exs=5):
 
         self.data_dir = os.path.join(data_dir, 'train') if train else os.path.join(data_dir, 'test')
@@ -32,10 +32,7 @@ class DVSDataset(Dataset):
         # break into sequences of length=frames_per_sample and put in list
 
         # Get all class folders
-        if train:
-            class_folders = sorted(os.listdir(self.data_dir))
-        else:
-            class_folders = sorted(os.listdir(self.data_dir))
+        class_folders = sorted(os.listdir(self.data_dir))
         class_to_idx = {cls: i for i, cls in enumerate(class_folders)}
 
         # Process each class folder
