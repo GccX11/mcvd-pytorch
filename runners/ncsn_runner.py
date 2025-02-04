@@ -497,6 +497,8 @@ class NCSNRunner():
                     if conditional and step % self.config.training.snapshot_freq == 0 and self.config.training.snapshot_sampling: # only at snapshot_freq, not at sample_freq
 
                         vid_metrics = self.video_gen(scorenet=test_scorenet, ckpt=step, train=True)
+                        if vid_metrics is None:
+                            vid_metrics = {}
 
                         if 'mse' in vid_metrics.keys():
                             self.mses.update(vid_metrics['mse'], step)
@@ -1078,6 +1080,7 @@ class NCSNRunner():
                         # Stretch out multiple frames horizontally
                         sample = stretch_image(sample, self.config.data.channels, self.config.data.image_size)  
 
+                        # TODO: figure out how to make this image_grid from a loaded model
                         image_grid = make_grid(sample, nrow=self.config.sampling.n_interpolations)
                         save_image(image_grid, os.path.join(self.args.image_folder, 'image_grid_{}.png'.format(i)))
                         torch.save(sample, os.path.join(self.args.image_folder, 'samples_{}.pt'.format(i)))
@@ -1134,6 +1137,7 @@ class NCSNRunner():
                 # Sampler
                 sampler = self.get_sampler()
 
+                # TODO: maybe this is the sampler we need to use
                 all_samples = sampler(init_samples, scorenet, cond=cond, cond_mask=cond_mask,
                                       n_steps_each=self.config.sampling.n_steps_each,
                                       step_lr=self.config.sampling.step_lr, verbose=True,
@@ -1988,6 +1992,7 @@ class NCSNRunner():
 
                 no_metrics = False
                 if real.shape[1] < pred.shape[1]: # Pad with zeros to prevent bugs
+                    print('=== shapes are different, NO METRICS ===')
                     no_metrics = True
                     real = torch.cat([real, torch.zeros(real.shape[0], pred.shape[1]-real.shape[1], real.shape[2], real.shape[3])], dim=1)
 
