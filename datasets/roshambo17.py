@@ -11,13 +11,12 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 # https://ieeexplore.ieee.org/document/8050403
+# https://www.research-collection.ethz.ch/handle/20.500.11850/704324
 # CUDA_VISIBLE_DEVICES=0 python main.py --config configs/kth64_big.yml --data_path /home/matt/DATA/KTH/h5 --exp kth --ni
 
 # [x] load the AVI files
+# [ ] figure out how to index into the individual sequences in the AVI files...
 # [-] load the roshambo aedat files
-# [ ] also support making time surfaces (either on the fly, or premaking them)
-# [ ] add HATS
-# [ ] add HOTS
 # [ ] try the diffusion model on these representations
 # [ ] try RNN on these representations
 # [ ] try SSM on these representations
@@ -85,12 +84,17 @@ def read_aedat2(filename):
 
 class Roshambo17AVIDataset(Dataset):
     def __init__(self, data_dir, frames_per_sample=20, train=True,
-                 start_frame=0, skip_frame=1, 
+                 start_at=0, skip_frame=1, 
                  random_horizontal_flip=True, with_target=True):
         
         self.frames_per_sample = frames_per_sample
         self.random_horizontal_flip = random_horizontal_flip
         self.with_target = with_target
+
+        if train:
+            data_dir = os.path.join(data_dir, "train")
+        else:
+            data_dir = os.path.join(data_dir, "test")
 
         self.sequences = []
         # load the AVI files from the data directory
@@ -109,15 +113,15 @@ class Roshambo17AVIDataset(Dataset):
                 label = os.path.basename(filename).split('_')[0]
 
                 self.read_frames(cap, label, frames_per_sample=frames_per_sample,
-                                start_frame=start_frame, skip_frame=skip_frame)
+                                start_at=start_at, skip_frame=skip_frame)
 
     def read_frames(self, cap, label, frames_per_sample=None,
-                    start_frame=0, skip_frame=1):
+                    start_at=0, skip_frame=1):
         # read frames
         actual_i = 0
         frames =[]
         while True:
-            if actual_i < start_frame:
+            if actual_i < start_at:
                 while True:
                     ret, frame = cap.read()
                     actual_i += 1
@@ -143,13 +147,13 @@ class Roshambo17AVIDataset(Dataset):
         self.sequences.append((frames, label))
         
     def read_frames0(self, cap, label, frames_per_sample=10, 
-                     start_frame=0, skip_frame=1):
+                     start_at=0, skip_frame=1):
         # read frames
         actual_i = 0
         i = 0
         frames = np.zeros((frames_per_sample, 1, 64, 64))
         while True:
-            if actual_i < start_frame:
+            if actual_i < start_at:
                 while True:
                     ret, frame = cap.read()
                     actual_i += 1
@@ -203,20 +207,45 @@ class Roshambo17AVIDataset(Dataset):
 
 
 class Roshambo17DVSDataset(Dataset):
-    def __init__(self, data_dir, frames_per_sample=5, train=True):
-        events = read_aedat2("/home/matt/DATA/ROSHAMBO17/recordings/aedat/paper_ale_front.aedat")
-
-        print(f"Loaded {len(events)} events")
-        print("First few events:")
-        print(events[:5])
+    def __init__(self, data_dir, events_per_sample=5, train=True,
+                 start_at=0, with_target=True):
+        
+        self.events_per_sample = events_per_sample
+        self.start_at = start_at
+        self.with_target = with_target
+        
+        # iterate over all aedat files and load the events
+        self.events = []
+        for filename in tqdm.tqdm(os.listdir(data_dir)):
+            if filename.endswith(".aedat") and not filename.startswith('background'):
+                try:
+                    events = read_aedat2(os.path.join(data_dir, filename))
+                    label = os.path.basename(filename).split('_')[0]
+                    self.events.append((events, label))
+                except Exception as e:
+                    print(f"Error reading {filename}: {e}")
         
         print(f"Dataset length: {self.__len__()}")
 
     def __len__(self):
-        pass
+        return len(self.events)
 
-    def __getitem__(self, index, time_idx=0):
-        pass
+    def __getitem__(self, index):
+        # pair the events with the labels and return a random sample of events
+        # with the corresponding label in __getitem__()
+        events, label = self.events[index]
+        # randomly select a sample of events
+        selected_events = events[np.random.choice(events.shape[0], self.events_per_sample)]
+        # create a tensor of the events
+        prefinals = []
+        for event in selected_events:
+            # Convert each frame to tensor and apply horizontal flip if needed
+            prefinals.append(torch.tensor(event))
+
+        if self.with_target:
+            return torch.stack(prefinals), torch.tensor(LABEL_MAP[label])
+        else:
+            return torch.stack(prefinals)
 
 
 if __name__ == "__main__":

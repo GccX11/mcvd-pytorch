@@ -13,12 +13,13 @@ from datasets.stochastic_moving_mnist import StochasticMovingMNIST
 from datasets.bair import BAIRDataset
 from datasets.kth import KTHDataset
 from datasets.dvs import DVSDataset
+from datasets.roshambo17 import Roshambo17AVIDataset
 from datasets.cityscapes import CityscapesDataset
 from datasets.ucf101 import UCF101Dataset
 from torch.utils.data import Subset
 
 
-DATASETS = ['CIFAR10', 'CELEBA', 'LSUN', 'FFHQ', 'IMAGENET', 'MOVINGMNIST', 'STOCHASTICMOVINGMNIST', 'BAIR', 'KTH', 'DVS', 'CITYSCAPES', 'UCF101']
+DATASETS = ['CIFAR10', 'CELEBA', 'LSUN', 'FFHQ', 'IMAGENET', 'MOVINGMNIST', 'STOCHASTICMOVINGMNIST', 'BAIR', 'KTH', 'DVS', 'CITYSCAPES', 'UCF101', 'ROSHAMBO17']
 
 
 def get_dataloaders(data_path, config):
@@ -193,6 +194,16 @@ def get_dataset(data_path, config, video_frames_pred=0, start_at=0):
                              random_time=True, random_horizontal_flip=config.data.random_flip)
         test_dataset = KTHDataset(data_path, frames_per_sample=frames_per_sample, train=False,
                                   random_time=True, random_horizontal_flip=False, total_videos=256, start_at=start_at)
+
+    elif config.data.dataset.upper() == "ROSHAMBO17":
+        # TODO: make train and test folders
+        # KTH64_h5 (data_path)
+        # |-- shard_0001.hdf5
+        frames_per_sample = config.data.num_frames_cond + getattr(config.data, "num_frames_future", 0) + video_frames_pred
+        dataset = Roshambo17AVIDataset(data_path, frames_per_sample=frames_per_sample, train=True,
+                             random_horizontal_flip=config.data.random_flip)
+        test_dataset = Roshambo17AVIDataset(data_path, frames_per_sample=frames_per_sample, train=False,
+                                  random_horizontal_flip=False, start_at=start_at)
 
     elif config.data.dataset.upper() == 'DVS':
         dataset = DVSDataset(data_path, train=True)
